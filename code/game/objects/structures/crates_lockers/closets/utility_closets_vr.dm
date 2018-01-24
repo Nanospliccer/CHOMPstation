@@ -3,7 +3,9 @@
 	new /obj/item/clothing/suit/radiation/taur(src)
 	new /obj/item/clothing/head/radiation(src)
 	new /obj/item/device/geiger(src)
-
+	new /obj/item/clothing/glasses/meson // CHOMPstation Edit
+	new /obj/item/clothing/glasses/meson // CHOMPstation Edit
+	new /obj/item/clothing/glasses/meson // CHOMPstation Edit
 
 /obj/structure/closet/bombcloset/New()
 	..()

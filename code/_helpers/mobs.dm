@@ -174,17 +174,17 @@ Proc for attack log creation, because really why not
 	var/target_loc = target.loc
 
 	var/holding = user.get_active_hand()
-	var/datum/progressbar/progbar
-	if (progress)
-		progbar = new(user, time, target)
+//	var/datum/progressbar/progbar
+//	if (progress)
+//		progbar = new(user, time, target)
 
 	var/endtime = world.time+time
-	var/starttime = world.time
+//	var/starttime = world.time
 	. = 1
 	while (world.time < endtime)
 		stoplag(1)
-		if (progress)
-			progbar.update(world.time - starttime)
+//		if (progress)
+//			progbar.update(world.time - starttime)
 		if(!user || !target)
 			. = 0
 			break
@@ -207,8 +207,8 @@ Proc for attack log creation, because really why not
 			. = 0
 			break
 
-	if (progbar)
-		qdel(progbar)
+//	if (progbar)
+//		qdel(progbar)
 
 /proc/do_after(mob/user, delay, atom/target = null, needhand = 1, progress = 1, var/incapacitation_flags = INCAPACITATION_DEFAULT)
 	if(!user)
@@ -221,17 +221,17 @@ Proc for attack log creation, because really why not
 
 	var/holding = user.get_active_hand()
 
-	var/datum/progressbar/progbar
-	if (progress)
-		progbar = new(user, delay, target)
+//	var/datum/progressbar/progbar
+//	if (progress)
+//		progbar = new(user, delay, target)
 
 	var/endtime = world.time + delay
-	var/starttime = world.time
+//	var/starttime = world.time
 	. = 1
 	while (world.time < endtime)
 		stoplag(1)
-		if (progress)
-			progbar.update(world.time - starttime)
+//		if (progress)
+//			progbar.update(world.time - starttime)
 
 		if(!user || user.incapacitated(incapacitation_flags) || user.loc != original_loc)
 			. = 0
@@ -246,5 +246,5 @@ Proc for attack log creation, because really why not
 				. = 0
 				break
 
-	if (progbar)
-		qdel(progbar)
+//	if (progbar)
+//		qdel(progbar)
