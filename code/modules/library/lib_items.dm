@@ -142,7 +142,8 @@
 	throw_range = 5
 	w_class = ITEMSIZE_NORMAL		 //upped to three because books are, y'know, pretty big. (and you could hide them inside eachother recursively forever)
 	attack_verb = list("bashed", "whacked", "educated")
-	var/dat			 // Actual page content
+	var/page = 1 // Current page
+	var/list/pages = list() // Ordered list of pages as they are to be displayed
 	var/due_date = 0 // Game time in 1/10th seconds
 	var/author		 // Who wrote the thing, can be changed by pen or PC. It is not automatically assigned
 	var/unique = 0   // 0 - Normal book, 1 - Should not be treated as normal book, unable to be copied, unable to be modified
@@ -160,12 +161,47 @@
 		else
 			user << "<span class='notice'>The pages of [title] have been cut out!</span>"
 			return
-	if(src.dat)
-		user << browse("<TT><I>Penned by [author].</I></TT> <BR>" + "[dat]", "window=book")
-		user.visible_message("[user] opens a book titled \"[src.title]\" and begins reading intently.")
-		onclose(user, "book")
 	else
-		user << "This book is completely blank!"
+		src.show_content(user)
+		user.visible_message("[user] opens a book titled \"[src.title]\" and begins reading intently.")
+		add_fingerprint(user)
+		onclose(user, "book")
+		
+/obj/item/weapon/book/proc/show_content(mob/user as mob)
+	var/dat
+	var/obj/item/weapon/W = pages[page]
+
+	// first
+	if(page == 1)
+		dat+= "<DIV STYLE='float:left; text-align:left; width:33.33333%'><A href='?src=\ref[src];prev_page=1'>Front</A></DIV>"
+		dat+= "<DIV STYLE='float:left; text-align:center; width:33.33333%'><A href='?src=\ref[src];remove=1'>Tear Out [(istype(W, /obj/item/weapon/paper)) ? "paper" : "photo"]</A></DIV>"
+		dat+= "<DIV STYLE='float:left; text-align:right; width:33.33333%'><A href='?src=\ref[src];next_page=1'>Next Page</A></DIV><BR><HR>"
+	// last
+	else if(page == pages.len)
+		dat+= "<DIV STYLE='float:left; text-align:left; width:33.33333%'><A href='?src=\ref[src];prev_page=1'>Previous Page</A></DIV>"
+		dat+= "<DIV STYLE='float:left; text-align:center; width:33.33333%'><A href='?src=\ref[src];remove=1'>Tear Out [(istype(W, /obj/item/weapon/paper)) ? "paper" : "photo"]</A></DIV>"
+		dat+= "<DIV STYLE='float;left; text-align:right; with:33.33333%'><A href='?src=\ref[src];next_page=1'>Back</A></DIV><BR><HR>"
+	// middle pages
+	else
+		dat+= "<DIV STYLE='float:left; text-align:left; width:33.33333%'><A href='?src=\ref[src];prev_page=1'>Previous Page</A></DIV>"
+		dat+= "<DIV STYLE='float:left; text-align:center; width:33.33333%'><A href='?src=\ref[src];remove=1'>Tear Out [(istype(W, /obj/item/weapon/paper)) ? "paper" : "photo"]</A></DIV>"
+		dat+= "<DIV STYLE='float:left; text-align:right; width:33.33333%'><A href='?src=\ref[src];next_page=1'>Next Page</A></DIV><BR><HR>"
+
+	if(istype(pages[page], /obj/item/weapon/paper))
+		var/obj/item/weapon/paper/P = W
+		if(!(istype(usr, /mob/living/carbon/human) || istype(usr, /mob/observer/dead) || istype(usr, /mob/living/silicon)))
+			dat+= "<HTML><HEAD><TITLE>[P.name]</TITLE></HEAD><BODY>[stars(P.info)][P.stamps]</BODY></HTML>"
+		else
+			dat+= "<HTML><HEAD><TITLE>[P.name]</TITLE></HEAD><BODY>[P.info][P.stamps]</BODY></HTML>"
+		user << browse(dat, "window=[name]")
+	else if(istype(pages[page], /obj/item/weapon/photo))
+		var/obj/item/weapon/photo/P = W
+		user << browse_rsc(P.img, "tmp_photo.png")
+		user << browse(dat + "<html><head><title>[P.name]</title></head>" \
+		+ "<body style='overflow:hidden'>" \
+		+ "<div> <img src='tmp_photo.png' width = '180'" \
+		+ "[P.scribble ? "<div> Written on the back:<br><i>[P.scribble]</i>" : ]"\
+		+ "</body></html>", "window=[name]")
 
 /obj/item/weapon/book/attackby(obj/item/weapon/W as obj, mob/user as mob)
 	if(carved)
@@ -186,7 +222,7 @@
 		if(unique)
 			user << "These pages don't seem to take the ink well. Looks like you can't modify it."
 			return
-		var/choice = input("What would you like to change?") in list("Title", "Contents", "Author", "Cancel")
+		var/choice = input("What would you like to change?") in list("Title", "Author", "Cancel")
 		switch(choice)
 			if("Title")
 				var/newtitle = reject_bad_text(sanitizeSafe(input("Write a new title:")))
@@ -196,13 +232,6 @@
 				else
 					src.name = newtitle
 					src.title = newtitle
-			if("Contents")
-				var/content = sanitize(input("Write your book's contents (HTML NOT allowed):") as message|null, MAX_BOOK_MESSAGE_LEN)
-				if(!content)
-					usr << "The content is invalid."
-					return
-				else
-					src.dat += content
 			if("Author")
 				var/newauthor = sanitize(input(usr, "Write the author's name:"))
 				if(!newauthor)
@@ -255,7 +284,7 @@
 	if(user.zone_sel.selecting == O_EYES)
 		user.visible_message("<span class='notice'>You open up the book and show it to [M]. </span>", \
 			"<span class='notice'> [user] opens up a book and shows it to [M]. </span>")
-		M << browse("<TT><I>Penned by [author].</I></TT> <BR>" + "[dat]", "window=book")
+		src.show_content(M)
 		user.setClickCooldown(DEFAULT_QUICK_COOLDOWN) //to prevent spam
 
 
